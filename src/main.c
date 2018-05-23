@@ -33,13 +33,15 @@
   
 /* Includes ------------------------------------------------------------------*/
 
-#include <math.h>
+#include <string.h>
 
 #include "ch.h"
 #include "hal.h"
 #include "test.h"
 
 #include "main.h"
+#include "utils.h"
+#include "stpm.h"
 
 /* =================================================*/
 /* General control variable                         */
@@ -49,6 +51,7 @@
 #define RUN_MAIN_THREAD                 TRUE
 
 char * energy_measure = "10";
+STPM_REG_TypeDef registers;
 
 /* =================================================*/
 /* Thread definition                                */
@@ -78,64 +81,23 @@ static THD_FUNCTION(Thread1, arg) {
  * Bluetooth thread #2.
  */
 
-static THD_WORKING_AREA(waThread2, 128);
-static THD_FUNCTION(Thread2, arg) {
+//static THD_WORKING_AREA(waThread2, 256);
+//static THD_FUNCTION(Thread2, arg) {
 
-    (void)arg;
+    //(void)arg;
 
-    chRegSetThreadName("th_2");
-
-}
-
-
-void getLSBFirstBinary(char * data, int binData[]){
-
-	int n, c, k, i;
-	
-	for(i = 0; i < sizeof(data); i++){
+    //chRegSetThreadName("query_stpm33");
+    
+    //while(true){
 		
-		chprintf((BaseChannel *)&SD3, "Value %d: %X.\n\r", i, data[i]);
+		//int * ptrRegisters = &registers;
 		
-		n = (int) data[i];
-        
-        for (c = 7; c >= 0; c--){
-			
-			k = n >> c;
+		//queryAllRegisters(ptrRegisters);
+        //chThdSleepMilliseconds(150);
+	//}
+    
 
-			if (k & 1){
-				binData[c+i*8] = 1;			
-			}
-			else {
-				binData[c+i*8] = 0;		
-			}	
-		}
-	
-	}
-	
-}
-
-unsigned long bin2Dec(int * array, int length){
-	
-	int i;
-	unsigned long sum = 0;
-	
-	for(i = 0; i < length; i++)
-		sum += array[i]*pow(2,i);
-		
-	return sum;
-		
-}
-
-void printIntArray(int * array, int length){
-	
-	int i;
-	
-	for(i = length-1; i >= 0; i--)
-		chprintf((BaseChannel *)&SD3, "%d", array[i]);
-	
-	chprintf((BaseChannel *)&SD3, "\n\r");	
-		
-}
+//}
 
 /*===========================================================================*/
 /* Initialization and main thread.                                           */
@@ -173,7 +135,7 @@ int main(void) {
     */
 
     chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO+1, Thread1, NULL);
-    //chThdCreateStatic(waThread2, sizeof(waThread2), NORMALPRIO+1, Thread2, NULL);
+    //chThdCreateStatic(waThread2, sizeof(waThread2), NORMALPRIO+2, Thread2, NULL);
 
     /*
     * Normal main() thread activity, in this demo it does nothing except
@@ -183,29 +145,46 @@ int main(void) {
 
     // Change to
 
-    while (RUN_MAIN_THREAD) {
+    //while (RUN_MAIN_THREAD) {
 		
 		// ...
         
-        int rspValBin[32];
-        char rsp[5];
-        char testComm_1[] = "\x04\xff\xff\xff\x83";
+        //int rspValBin[32];
+        //char rsp[5];
+        //char testComm_1[] = "\x04\xff\xff\xff\x83";
         
-        sdWrite(&SD2, (uint8_t *) testComm_1, 5);
+        //sdWrite(&SD2, (uint8_t *) testComm_1, 5);
 		
-		sdReadTimeout(&SD2, rsp, sizeof(rsp), 2000);
+		//sdReadTimeout(&SD2, (uint8_t *) rsp, sizeof(rsp), 2000);
         
-        getLSBFirstBinary(rsp, rspValBin);
+        //getLSBFirstBinary(rsp, rspValBin);
         
-        printIntArray(rspValBin, sizeof(rspValBin)/sizeof(rspValBin[0]));		
+        //printIntArray(rspValBin, sizeof(rspValBin)/sizeof(rspValBin[0]));		
         
-        unsigned long rspValDec = bin2Dec(rspValBin, sizeof(rspValBin)/sizeof(rspValBin[0]));
+        //unsigned long rspValDec = bin2Dec(rspValBin, sizeof(rspValBin)/sizeof(rspValBin[0]));
         
-        chprintf((BaseChannel *)&SD3, "Value Dec: %lu \n\r", rspValDec);
+        //chprintf((BaseChannel *)&SD3, "Value Dec: %lu \n\r", rspValDec);
         
-        memset(rspValBin, 0, sizeof(rspValBin));
-        memset(rsp, 0, sizeof(rsp));
+        //memset(rspValBin, 0, sizeof(rspValBin));
+        //memset(rsp, 0, sizeof(rsp));
+        
+        //chThdSleepMilliseconds(5000);
+        
+        
+        // ...
+        
+       
+		int * ptrRegisters = &registers;
+		
+		queryAllRegisters(ptrRegisters);
+        
+        chThdSleepMilliseconds(3000);
+        
+		chprintf((BaseChannel *)&SD3, "1 Value DSP_REG14: %X \n\r", registers.DSP_REG14);
+		chprintf((BaseChannel *)&SD3, "1 Value TOT_REG1: %X \n\r", registers.TOT_REG1);
+        
+        //chThdSleepMilliseconds(3000);
         	
-	}
+	//}
         
 }

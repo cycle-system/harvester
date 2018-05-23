@@ -114,7 +114,7 @@ CSRC = $(STARTUPSRC) \
        $(BOARDSRC) \
        $(TESTSRC) \
        $(CHIBIOS)/os/hal/lib/streams/chprintf.c \
-       main.c 
+       stpm.c utils.c main.c 
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
