@@ -6,6 +6,8 @@
  * @{
  */
  
+#include <string.h> 
+ 
 #include "ch.h"
 #include "hal.h"
 
@@ -13,8 +15,20 @@
 #include "utils.h"
  
 /*===========================================================================*/
+/* Definitions                     .                                         */
+/*===========================================================================*/
+ 
+#define DELAY_UART 500;
+ 
+/*===========================================================================*/
 /* Local variables                 .                                         */
 /*===========================================================================*/
+
+char comm[][5] = {"\x04\xff\xff\xff\x83",
+				  "\xff\xff\xff\xff\x7b",
+				  "\xff\x05\x60\x00\xe7",
+				  "\x00\xff\xff\xff\xf0"
+				};
 
 /*===========================================================================*/
 /* General functions                                                         */
@@ -35,40 +49,49 @@ void initAllRegisters(int * registersAddress){
 	
 };
 
-void queryAllRegisters(int * registersAddress){
+void readInitSequence(void){
 	
-	int counter;
-	
-	char comm_base[] = "\x04\xff\xff\xff\x83";
-	char comm_next[] = "\xff\xff\xff\xff\x7b";
+	int i;
 	char rsp[5];
 	
-	int rspValBin[32];
+	for(i = 0; i<4; i++){
+		
+		sdWrite(&SD2, (uint8_t *) comm[i], 5);
+		chThdSleepMilliseconds(50);
+		sdReadTimeout(&SD2, (uint8_t *) rsp, sizeof(rsp), 2000);
+		chThdSleepMilliseconds(50);
+		
+	};
 	
+};
+
+void queryAllRegisters(int * registersAddress, mutex_t * mtx){
+	
+	int counter;
+	char rsp[5];
+	int rspValBin[32];
 	int * ptr;
 	
-	for(counter = 0; counter < 69; counter++){
+	for(counter = 0; counter<70; counter++){
 	
-		// Address to write the value
 		ptr = registersAddress + (counter*4)/(sizeof(int));
+	
+		sdWrite(&SD2, (uint8_t *) comm[1], 5);
 		
-		if(counter == 0){
-			sdWrite(&SD2, (uint8_t *) comm_base, 5);
-		}
-		else{ 
-			sdWrite(&SD2, (uint8_t *) comm_next, 5);
-		}
+		chThdSleepMilliseconds(50);
 		
 		sdReadTimeout(&SD2, (uint8_t *) rsp, sizeof(rsp), 2000);
-			
-		chprintf((BaseChannel *)&SD3, "Registro %d \n\r", counter);
-
+        
 		getLSBFirstBinary(rsp, rspValBin);
-
-		*ptr = (uint32_t) bin2Dec(rspValBin, sizeof(rspValBin)/sizeof(rspValBin[0]));
-
-		chThdSleepMilliseconds(500);
 		
-	}
+		chMtxLock(mtx);
+		
+		*ptr = (uint32_t) bin2Dec(rspValBin, sizeof(rspValBin)/sizeof(rspValBin[0]));
+		
+		chMtxUnlock(mtx);
+		
+		memset(rsp, 0, sizeof(rsp));
+	
+	};
 	
 };

@@ -5,10 +5,6 @@
  * @{
  */
 
-#define HAL_USE_HC_05_BLUETOOTH                 TRUE
-
-#if HAL_USE_HC_05_BLUETOOTH || defined(__DOXYGEN__) || 1
-
 #include "hal.h"
 #include "stdlib.h"
 
@@ -23,6 +19,3 @@ enum fsm_states {
     st_store_in_bd = 4,
     st_wait_bd_confirmation = 5
 };
-
-#endif  //HAL_USE_HC05 || defined(__DOXYGEN__)
-

@@ -50,9 +50,6 @@ void getLSBFirstBinary(char * data, int binData[]){
 		}
 	
 	}
-	
-	printIntArray(binData, 32);
-	
 }
 
 /*!

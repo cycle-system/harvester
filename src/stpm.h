@@ -6,7 +6,10 @@
  * @{
  */
 
+#include "ch.h"
+ 
 #include <stdint.h>
+#include <chmtx.h>
  
 /*===========================================================================*/
 /* Structures & Type Def           .                                         */
@@ -100,4 +103,5 @@ typedef struct
 /*===========================================================================*/
 
 void initAllRegisters(int * registersAddress);
-void queryAllRegisters(int * registersAddress);
+void readInitSequence(void);
+void queryAllRegisters(int * registersAddress, mutex_t * mtx);

@@ -33,11 +33,13 @@
   
 /* Includes ------------------------------------------------------------------*/
 
-#include <string.h>
 
 #include "ch.h"
 #include "hal.h"
 #include "test.h"
+
+#include <string.h>
+#include <chmtx.h>
 
 #include "main.h"
 #include "utils.h"
@@ -53,6 +55,8 @@
 char * energy_measure = "10";
 STPM_REG_TypeDef registers;
 
+static MUTEX_DECL(stpm_mtx);
+
 /* =================================================*/
 /* Thread definition                                */
 /*                                                  */
@@ -62,7 +66,7 @@ STPM_REG_TypeDef registers;
  * Blinker thread #1.
  */
 
-static THD_WORKING_AREA(waThread1, 128);
+static THD_WORKING_AREA(waThread1, 64);
 static THD_FUNCTION(Thread1, arg) {
 
     (void)arg;
@@ -81,23 +85,25 @@ static THD_FUNCTION(Thread1, arg) {
  * Bluetooth thread #2.
  */
 
-//static THD_WORKING_AREA(waThread2, 256);
-//static THD_FUNCTION(Thread2, arg) {
+static THD_WORKING_AREA(waThread2, 512);
+static THD_FUNCTION(Thread2, arg) {
 
-    //(void)arg;
+    (void)arg;
 
-    //chRegSetThreadName("query_stpm33");
+    chRegSetThreadName("query_stpm33");
     
-    //while(true){
+    int * ptr = (int *) &registers;
+    
+    while(true){
 		
-		//int * ptrRegisters = &registers;
+		readInitSequence();
+		queryAllRegisters(ptr,&stpm_mtx);
 		
-		//queryAllRegisters(ptrRegisters);
-        //chThdSleepMilliseconds(150);
-	//}
+		chThdSleepMilliseconds(5000);
+	}
     
 
-//}
+}
 
 /*===========================================================================*/
 /* Initialization and main thread.                                           */
@@ -106,10 +112,11 @@ static THD_FUNCTION(Thread1, arg) {
 int main(void) {
 
     /*
-    	* Initialization of variables
-    	*/
-
-
+	* Initialization of variables
+	*/
+	
+	chMtxObjectInit(&stpm_mtx); 
+		
     /*
 		* System initializations.
 		* - HAL initialization, this also initializes the configured device drivers
@@ -135,7 +142,7 @@ int main(void) {
     */
 
     chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO+1, Thread1, NULL);
-    //chThdCreateStatic(waThread2, sizeof(waThread2), NORMALPRIO+2, Thread2, NULL);
+    chThdCreateStatic(waThread2, sizeof(waThread2), NORMALPRIO+1, Thread2, NULL);
 
     /*
     * Normal main() thread activity, in this demo it does nothing except
@@ -145,46 +152,83 @@ int main(void) {
 
     // Change to
 
-    //while (RUN_MAIN_THREAD) {
+	//int a;
+	
+	//int rspValBin[32];	
+	//char rsp[5];
+	
+	//char comm_1[] = "\x04\xff\xff\xff\x83";
+	//char comm_2[] = "\xff\xff\xff\xff\x7b";
+	//char comm_3[] = "\xff\x05\x60\x00\xe7";
+	//char comm_4[] = "\x00\xff\xff\xff\xf0";
+	//char comm_5[] = "\xff\xff\xff\xff\x7b";
+			
+	//sdWrite(&SD2, (uint8_t *) comm_1, 5);
+	
+	//chThdSleepMilliseconds(500);
 		
-		// ...
-        
-        //int rspValBin[32];
-        //char rsp[5];
-        //char testComm_1[] = "\x04\xff\xff\xff\x83";
-        
-        //sdWrite(&SD2, (uint8_t *) testComm_1, 5);
+	//sdReadTimeout(&SD2, (uint8_t *) rsp, sizeof(rsp), 2000);
+	
+	//chThdSleepMilliseconds(500);
+	
+	//sdWrite(&SD2, (uint8_t *) comm_2, 5);
+	
+	//chThdSleepMilliseconds(500);
+		
+	//sdReadTimeout(&SD2, (uint8_t *) rsp, sizeof(rsp), 2000);
+	
+	//chThdSleepMilliseconds(500);
+	
+	//sdWrite(&SD2, (uint8_t *) comm_3, 5);
+	
+	//chThdSleepMilliseconds(500);
+		
+	//sdReadTimeout(&SD2, (uint8_t *) rsp, sizeof(rsp), 2000);
+	
+	//chThdSleepMilliseconds(500);
+	
+	//sdWrite(&SD2, (uint8_t *) comm_4, 5);
+	
+	//chThdSleepMilliseconds(500);
+		
+	//sdReadTimeout(&SD2, (uint8_t *) rsp, sizeof(rsp), 2000);
+
+	//chThdSleepMilliseconds(500);
+	
+	//for(a = 0; a<70; a++){
+	
+		//sdWrite(&SD2, (uint8_t *) comm_2, 5);
+		
+		//chThdSleepMilliseconds(500);
 		
 		//sdReadTimeout(&SD2, (uint8_t *) rsp, sizeof(rsp), 2000);
         
-        //getLSBFirstBinary(rsp, rspValBin);
-        
-        //printIntArray(rspValBin, sizeof(rspValBin)/sizeof(rspValBin[0]));		
-        
-        //unsigned long rspValDec = bin2Dec(rspValBin, sizeof(rspValBin)/sizeof(rspValBin[0]));
-        
-        //chprintf((BaseChannel *)&SD3, "Value Dec: %lu \n\r", rspValDec);
-        
-        //memset(rspValBin, 0, sizeof(rspValBin));
-        //memset(rsp, 0, sizeof(rsp));
-        
-        //chThdSleepMilliseconds(5000);
-        
-        
-        // ...
-        
-       
-		int * ptrRegisters = &registers;
+		//chThdSleepMilliseconds(500);
 		
-		queryAllRegisters(ptrRegisters);
-        
-        chThdSleepMilliseconds(3000);
-        
-		chprintf((BaseChannel *)&SD3, "1 Value DSP_REG14: %X \n\r", registers.DSP_REG14);
-		chprintf((BaseChannel *)&SD3, "1 Value TOT_REG1: %X \n\r", registers.TOT_REG1);
-        
-        //chThdSleepMilliseconds(3000);
+		//chprintf((BaseChannel *)&SD3, "R. %d: %X ", a, rsp[0]);
+		//chprintf((BaseChannel *)&SD3, "%X ", rsp[1]);
+		//chprintf((BaseChannel *)&SD3, "%X ", rsp[2]);
+		//chprintf((BaseChannel *)&SD3, "%X ", rsp[3]);
+		//chprintf((BaseChannel *)&SD3, "%X \n\r", rsp[4]);
+	
+		//chThdSleepMilliseconds(500);
+	
+		//memset(rsp, 0, sizeof(rsp));
+	
+	//};
+
+	while (RUN_MAIN_THREAD) {
+
+		// To Write the main thread
+		
+		chThdSleepMilliseconds(10000);
+		
+		chMtxLock(&stpm_mtx);
+		
+		chprintf((BaseChannel *)&SD3, "%Reg. 36: %X \n\r", registers.DSP_REG14);
         	
-	//}
+        chMtxUnlock(&stpm_mtx);	
+        	
+	}
         
 }
