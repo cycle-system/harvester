@@ -43,7 +43,10 @@
 
 #include "main.h"
 #include "utils.h"
-#include "stpm.h"
+#include "metroTask.h"
+#include "metrology.h"
+#include "metrology_hal.h"
+#include "stpm_metrology.h"
 
 /* =================================================*/
 /* General control variable                         */
@@ -52,8 +55,7 @@
 
 #define RUN_MAIN_THREAD                 TRUE
 
-char * energy_measure = "10";
-STPM_REG_TypeDef registers;
+METRO_NB_Device_t Device = EXT1;
 
 static MUTEX_DECL(stpm_mtx);
 
@@ -92,14 +94,12 @@ static THD_FUNCTION(Thread2, arg) {
 
     chRegSetThreadName("query_stpm33");
     
-    int * ptr = (int *) &registers;
-    
     while(true){
 		
 		readInitSequence();
-		queryAllRegisters(ptr,&stpm_mtx);
+		queryAllRegisters(Device, &stpm_mtx);
 		
-		chThdSleepMilliseconds(5000);
+		chThdSleepMilliseconds(2000);
 	}
     
 
@@ -144,89 +144,27 @@ int main(void) {
     chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO+1, Thread1, NULL);
     chThdCreateStatic(waThread2, sizeof(waThread2), NORMALPRIO+1, Thread2, NULL);
 
-    /*
-    * Normal main() thread activity, in this demo it does nothing except
-    * sleeping in a loop and check the button state, when the button is
-    * pressed the test procedure is launched.
-    */
+    /*******************************************************************
+    *	Prepare the framework to manage the data 
+    *******************************************************************/
 
-    // Change to
-
-	//int a;
+	/* Init STPM with complete sequence and set the registers*/
 	
-	//int rspValBin[32];	
-	//char rsp[5];
-	
-	//char comm_1[] = "\x04\xff\xff\xff\x83";
-	//char comm_2[] = "\xff\xff\xff\xff\x7b";
-	//char comm_3[] = "\xff\x05\x60\x00\xe7";
-	//char comm_4[] = "\x00\xff\xff\xff\xf0";
-	//char comm_5[] = "\xff\xff\xff\xff\x7b";
-			
-	//sdWrite(&SD2, (uint8_t *) comm_1, 5);
-	
-	//chThdSleepMilliseconds(500);
-		
-	//sdReadTimeout(&SD2, (uint8_t *) rsp, sizeof(rsp), 2000);
-	
-	//chThdSleepMilliseconds(500);
-	
-	//sdWrite(&SD2, (uint8_t *) comm_2, 5);
-	
-	//chThdSleepMilliseconds(500);
-		
-	//sdReadTimeout(&SD2, (uint8_t *) rsp, sizeof(rsp), 2000);
-	
-	//chThdSleepMilliseconds(500);
-	
-	//sdWrite(&SD2, (uint8_t *) comm_3, 5);
-	
-	//chThdSleepMilliseconds(500);
-		
-	//sdReadTimeout(&SD2, (uint8_t *) rsp, sizeof(rsp), 2000);
-	
-	//chThdSleepMilliseconds(500);
-	
-	//sdWrite(&SD2, (uint8_t *) comm_4, 5);
-	
-	//chThdSleepMilliseconds(500);
-		
-	//sdReadTimeout(&SD2, (uint8_t *) rsp, sizeof(rsp), 2000);
-
-	//chThdSleepMilliseconds(500);
-	
-	//for(a = 0; a<70; a++){
-	
-		//sdWrite(&SD2, (uint8_t *) comm_2, 5);
-		
-		//chThdSleepMilliseconds(500);
-		
-		//sdReadTimeout(&SD2, (uint8_t *) rsp, sizeof(rsp), 2000);
-        
-		//chThdSleepMilliseconds(500);
-		
-		//chprintf((BaseChannel *)&SD3, "R. %d: %X ", a, rsp[0]);
-		//chprintf((BaseChannel *)&SD3, "%X ", rsp[1]);
-		//chprintf((BaseChannel *)&SD3, "%X ", rsp[2]);
-		//chprintf((BaseChannel *)&SD3, "%X ", rsp[3]);
-		//chprintf((BaseChannel *)&SD3, "%X \n\r", rsp[4]);
-	
-		//chThdSleepMilliseconds(500);
-	
-		//memset(rsp, 0, sizeof(rsp));
-	
-	//};
+	METRO_Init();
 
 	while (RUN_MAIN_THREAD) {
 
-		// To Write the main thread
-		
-		chThdSleepMilliseconds(10000);
+		chThdSleepMilliseconds(4000);
 		
 		chMtxLock(&stpm_mtx);
 		
-		chprintf((BaseChannel *)&SD3, "%Reg. 36: %X \n\r", registers.DSP_REG14);
-        	
+		METRO_Update_Measures();
+		
+		chprintf((BaseChannel *)&SD3, "%Voltage RMS: %d mV\n\r", metroData.rmsvoltage);
+		chprintf((BaseChannel *)&SD3, "%Current RMS: %d mA\n\r", metroData.rmscurrent);
+		chprintf((BaseChannel *)&SD3, "%Power Active: %d mW\n\r", metroData.powerActive);
+		chprintf((BaseChannel *)&SD3, "%Energy Active: %d mWh\n\n\r", metroData.energyActive);
+		
         chMtxUnlock(&stpm_mtx);	
         	
 	}
