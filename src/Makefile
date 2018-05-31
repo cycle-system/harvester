@@ -114,7 +114,8 @@ CSRC = $(STARTUPSRC) \
        $(BOARDSRC) \
        $(TESTSRC) \
        $(CHIBIOS)/os/hal/lib/streams/chprintf.c \
-       utils.c metrology_hal.c metroTask.c metrology.c main.c 
+       $(CHIBIOS)/os/various/syscalls.c \
+       cJSON.c utils.c metrology_hal.c metroTask.c metrology.c main.c 
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
@@ -175,7 +176,7 @@ HEX  = $(CP) -O ihex
 BIN  = $(CP) -O binary
 
 # ARM-specific options here
-AOPT =
+AOPT = 
 
 # THUMB-specific options here
 TOPT = -mthumb -DTHUMB

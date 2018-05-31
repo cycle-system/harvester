@@ -25,6 +25,8 @@
 *******************************************************************************/
 
 #include "metrology.h"
+#include "metrology_hal.h"
+
 #include <stdint.h>
 
 

@@ -160,12 +160,13 @@ int main(void) {
 		
 		METRO_Update_Measures();
 		
-		chprintf((BaseChannel *)&SD3, "%Voltage RMS: %d mV\n\r", metroData.rmsvoltage);
-		chprintf((BaseChannel *)&SD3, "%Current RMS: %d mA\n\r", metroData.rmscurrent);
-		chprintf((BaseChannel *)&SD3, "%Power Active: %d mW\n\r", metroData.powerActive);
-		chprintf((BaseChannel *)&SD3, "%Energy Active: %d mWh\n\n\r", metroData.energyActive);
+		char * measures = getJsonMeasures();
+		
+		chprintf((BaseChannel *)&SD3, "%s", measures);
 		
         chMtxUnlock(&stpm_mtx);	
+		
+		free(measures);
         	
 	}
         

@@ -20,4 +20,5 @@
 void getLSBFirstBinary(char * data, int binData[]);
 unsigned long bin2Dec(int * array, int length);
 void printIntArray(int * array, int length);
+char * getJsonMeasures(void);
 
